@@ -1,0 +1,11 @@
+*.swp
+*.pyc
+*.log
+*.pyw
+*.un~
+
+cm_api/build/*
+cm_api/dist/*
+cm_api/cm_api.egg-info/*
+
+.venv/*
