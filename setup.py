@@ -25,7 +25,7 @@ def main():
         platforms="Linux",
         license="BSD",
         packages=find_packages(),
-        install_requires=['cm_api==17.0.0'],
+        install_requires=['cm_api==17.0.0', 'requests==2.18.4'],
         package_data={},
         entry_points={
             'console_scripts': [

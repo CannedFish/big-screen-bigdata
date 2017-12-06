@@ -1,11 +1,20 @@
 # -*- coding: utf-8 -*-
+
+import logging
+
+LOG = logging.getLogger(__name__)
+
 import ssl
 from cm_api.api_client import ApiResource
 
-from settings import ca_file_path, cm_host_name
+from settings import ca_file_path, cm_host_name, cm_usr, cm_pwd
 
 context = ssl.create_default_context(cafile=ca_file_path)
-api = ApiResource(cm_host_name, use_tls=True, ssl_context=context)
+api = ApiResource(cm_host_name
+        , username=cm_usr
+        , password=cm_pwd
+        , use_tls=True
+        , ssl_context=context)
 # reses = api.query_timeseries('select cpu_percent where hostname=bigdata-120')
 # for res in reses:
     # for ts in res.timeSeries:
@@ -17,9 +26,19 @@ api = ApiResource(cm_host_name, use_tls=True, ssl_context=context)
 def get_host_total():
     pass
 
+def get_host_status():
+    LOG.debug('get_host_status called')
+    query = 'select health_good_rate, health_bad_rate where hostname rlike "bigdata-[0-9]+" and category=HOST'
+    LOG.debug('query: %s' % query)
+
+    reses = api.query_timeseries(query)
+    for res in reses:
+        for ts in res.timeSeries:
+            LOG.debug(ts)
+
 def get_cpu_mem_info_each_host():
     # Host Metrics
-    # TODO: select cores, physical_memory_total where hostName rlike "bigdata-[0-9]+"
+    # TODO: select cores, physical_memory_total where hostname rlike "bigdata-[0-9]+"
     pass
 
 def get_storage_capacity_each_host():

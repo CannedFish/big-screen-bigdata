@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import etl_cm_api
 import settings
+
 import logging
 
 logging.basicConfig(level=logging.DEBUG, \
@@ -16,12 +18,5 @@ logging.getLogger('').addHandler(console)
 
 LOG = logging.getLogger(__name__)
 
-def main():
-    # start an interval procedure
-    #   1. Get data through cm_api;
-    #   2. Store data into apps' database with corrected format;
-    pass
-
-if __name__ == '__main__':
-    main()
+etl_cm_api.get_host_status()
 
