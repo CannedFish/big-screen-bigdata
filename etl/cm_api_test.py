@@ -20,3 +20,5 @@ LOG = logging.getLogger(__name__)
 
 etl_cm_api.get_host_status()
 
+etl_cm_api.get_cluster_resource()
+

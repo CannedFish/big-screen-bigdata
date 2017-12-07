@@ -23,28 +23,59 @@ api = ApiResource(cm_host_name
 
 # Platform Statistics
 # Physical resource
-def get_host_total():
-    pass
-
 def get_host_status():
     LOG.debug('get_host_status called')
-    query = 'select health_good_rate, health_bad_rate where hostname rlike "bigdata-[0-9]+" and category=HOST'
+    query = 'select health_good_rate where hostname rlike "bigdata-[0-9]+" and category=HOST'
+    LOG.debug('query: %s' % query)
+
+    reses = api.query_timeseries(query) # from_time, to_time
+    for res in reses:
+        for ts in res.timeSeries:
+            LOG.debug(ts.metadata.attributes)
+            for data in ts.data:
+                LOG.debug(data.value)
+    # TODO: fulfill data of phy_health
+
+def __get_core_resource():
+    # TODO: cores
+    pass
+
+def __get_mem_resource():
+    # TODO: physical_memory_total
+    pass
+
+def __get_disk_capacity_resource():
+    # TODO: total_capacity_across_directories
+    pass
+
+def get_cluster_resource():
+    # TODO: fulfill data of cluster_resource, capacity maybe need to seperate with others
+    LOG.debug('get_cluster_resource called')
+    # query = 'select cores, physical_memory_total, capacity where hostname rlike "bigdata-[0-9]+" and category=HOST'
+    query = 'select cores where hostname rlike "bigdata-[0-9]+" and category=HOST'
     LOG.debug('query: %s' % query)
 
     reses = api.query_timeseries(query)
     for res in reses:
         for ts in res.timeSeries:
-            LOG.debug(ts)
+            LOG.debug(ts.metadata.attributes)
+            for data in ts.data:
+                LOG.debug(data.value)
+    # TODO: split info by cluster or releave this work to api caller
+    __get_core_resource()
+    __get_mem_resource()
+    __get_disk_capacity_resource()
 
-def get_cpu_mem_info_each_host():
-    # Host Metrics
-    # TODO: select cores, physical_memory_total where hostname rlike "bigdata-[0-9]+"
-    pass
-
-def get_storage_capacity_each_host():
-    # Filesystem Metrics
+def get_cluster_resource_usage():
     # TODO: capacity
-    pass
+    LOG.debug('get_host_status called')
+    query = 'select cpu_percent, physical_memory_used, capacity_used where hostname rlike "bigdata-[0-9]+" and category=HOST'
+    LOG.debug('query: %s' % query)
+    
+    reses = api.query_timeseries(query)
+    for res in reses:
+        for ts in res.timeSeries:
+            LOG.debug(ts.metadata.attributes)
 
 def get_memory_total():
     pass
