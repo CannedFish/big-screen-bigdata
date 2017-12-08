@@ -18,7 +18,9 @@ logging.getLogger('').addHandler(console)
 
 LOG = logging.getLogger(__name__)
 
-etl_cm_api.get_host_status()
+# LOG.debug(etl_cm_api.get_host_status())
 
-etl_cm_api.get_cluster_resource()
+# etl_cm_api.get_cluster_resource()
+
+LOG.debug(etl_cm_api.get_cluster_resource_usage())
 
