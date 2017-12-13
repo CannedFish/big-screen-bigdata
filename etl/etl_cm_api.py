@@ -2,6 +2,7 @@
 
 from datetime import datetime
 import time
+import random
 import logging
 
 LOG = logging.getLogger(__name__)
@@ -31,11 +32,6 @@ api = ApiResource(cm_host_name
         , password=cm_pwd
         , use_tls=True
         , ssl_context=context)
-# reses = api.query_timeseries('select cpu_percent where hostname=bigdata-120')
-# for res in reses:
-    # for ts in res.timeSeries:
-        # for data in ts.data:
-            # print data.timestamp, data.value, data.type
 
 def get_host_status():
     # NOTE: call every 5 minuts
@@ -102,6 +98,7 @@ def get_cluster_resource():
 
 
 def get_cluster_resource_usage():
+    # NOTE: call every 5 minuts
     LOG.debug('get_cluster_resource_usage called')
     
     result = [[{\
@@ -188,89 +185,134 @@ def get_cluster_resource_usage():
         } for metric in c\
     ] for c in result]
 
-def get_memory_total():
-    pass
+Service_Categroy = [
+    ['Flume', 'Sqoop 2'],
+    ['Kafka'],
+    ['YARN (MR2 Included)', 'HDFS nameservice1', 'Hive', 'Spark 2', 'Zookeeper', 'HBase', 'HDFS']
+]
 
-def get_storage_total():
-    pass
+def __service_cluster_belongs(serv_name):
+    clusters_num = len(Service_Categroy)
+    for _ in range(clusters_num):
+        if serv_name in Service_Categroy[_]:
+            return _
 
-# Profile
-# NOTE: if possible, get these four profile through one tsquery
-def get_cpu_usage():
-    # NOTE: Host Metrics
-    pass
+    return clusters_num
 
-def get_memory_usage():
-    # NOTE: Host Metrics
-    pass
+def get_service_status():
+    result = {}
 
-def get_disk_io():
-    # NOTE: Disk Metrics
-    pass
+    query = 'SELECT health_good_rate WHERE category=SERVICE'
+    LOG.debug('query: %s' % query)
+    reses = api.query_timeseries(query)
+    for res in reses:
+        for ts in res.timeSeries:
+            if len(ts.data) == 0:
+                continue
+            ts_ret = []
+            cluster = __service_cluster_belongs(ts.metadata.entityName)
+            for data in ts.data:
+                ts_ret.append({
+                    'timestamp': time.mktime(data.timestamp.timetuple()),
+                    'service_name': ts.metadata.entityName,
+                    'cluster': cluster,
+                    'health': 0 if data.value >= 0.5 else 1
+                })
+            result[ts.metadata.entityName] = ts_ret
 
-def get_net_io():
-    # NOTE: Network interface Metrics
-    pass
+    return result
 
-# Abstract resource
-def get_vcore_total():
-    pass
+def get_data_collector_volume():
+    result = []
 
-# def get_memory_total():
-    # pass
+    query = 'SELECT event_received_rate_across_flume_sources WHERE category=CLUSTER'
+    LOG.debug('query: %s' % query)
+    reses = api.query_timeseries(query)
+    for res in reses:
+        for ts in res.timeSeries:
+            for data in ts.data:
+                result.append({
+                    'timestamp': time.mktime(data.timestamp.timetuple()),
+                    'volume': data.value
+                })
 
-# def get_storage_total():
-    # pass
+    return result
 
-# Abstract resource usage
-def get_vcore_usage():
-    pass
+def get_msg_queue_volume():
+    result = []
 
-def get_vmemory_usage():
-    pass
+    query = 'SELECT kafka_bytes_received_rate_across_kafka_brokers, kafka_bytes_fetched_rate_across_kafka_brokers WHERE category=CLUSTER'
+    LOG.debug('query: %s' % query)
+    reses = api.query_timeseries(query)
+    for res in reses:
+        volume_in = res.timeSeries[0]
+        volume_out = res.timeSeries[1]
+        for data_in, data_out in zip(volume_in.data, volume_out.data):
+            result.append({
+                'timestamp': time.mktime(data_in.timestamp.timetuple()),
+                'volume_in': data_in.value,
+                'volume_out': data_out.value
+            })
 
-def get_storage_usage():
-    pass
+    return result
 
-# Service report
-def get_job_completed():
-    pass
+def get_data_statistics():
+    # TODO: count records from hdfs and hbase
+    now = time.time()
+    return [{\
+            'timestamp': now-60*_,\
+            'records': random.randint(0, 1000000)\
+    } for _ in range(5)]
 
-def get_job_failed():
-    pass
+def get_vir_resource():
+    result = []
 
-# Job Statistics
-def get_job_vcore_usage(job_id):
-    pass
+    query = 'SELECT available_vcores_across_yarn_pools, available_memory_mb_across_yarn_pools, dfs_capacity_across_hdfss WHERE category=CLUSTER'
+    LOG.debug('query: %s' % query)
+    reses = api.query_timeseries(query)
+    for res in reses:
+        vcore = res.timeSeries[0]
+        vmem = res.timeSeries[1]
+        hdfs = res.timeSeries[2]
+        for c, m, h in zip(vcore.data, vmem.data, hdfs.data):
+            result.append({
+                'timestamp': time.mktime(c.timestamp.timetuple()),
+                'vcores': c.value,
+                'vmems': m.value,
+                'hdfs_capacity': h.value,
+            })
 
-def get_job_vmemory_usage(job_id):
-    pass
+    return result
 
-def get_job_during_time(job_id):
-    pass
+def get_vir_resource_status():
+    result = []
 
-def get_job_result_status(job_id):
-    pass
+    query = 'SELECT allocated_vcores_across_yarn_pools, allocated_memory_mb_across_yarn_pools, dfs_capacity_used_across_hdfss WHERE category=CLUSTER'
+    LOG.debug('query: %s' % query)
+    reses = api.query_timeseries(query)
+    for res in reses:
+        vcore = res.timeSeries[0]
+        vmem = res.timeSeries[1]
+        hdfs = res.timeSeries[2]
+        for c, m, h in zip(vcore.data, vmem.data, hdfs.data):
+            result.append({
+                'timestamp': time.mktime(c.timestamp.timetuple()),
+                'vcores_used': c.value,
+                'vmems_used': m.value,
+                'hdfs_used': h.value,
+            })
 
-# User Statistics
-def get_tenant_job_submitted(tenant_id):
-    # job_id && resource usage(vcore, memory, during time)
-    pass
+    return result
 
-def get_tenant_storage_usage(tenant_id):
-    # at least including disk usage
-    pass
+one_day_seconds = 60*60*24*30
+def get_user_statistics():
+    result = []
 
-# Service Statistics
-def get_service_cpu_usage(service):
-    pass
-
-def get_service_memory_usage(service):
-    pass
-
-def get_service_disk_io(service):
-    pass
-
-def get_service_net_io(service):
-    pass
+    query = 'SELECT allocated_vcore_seconds FROM YARN_APPLICATIONS'
+    LOG.debug('query: %s' % query)
+    from_time = datetime.fromtimestamp(time.time()-one_day_seconds)
+    reses = api.query_timeseries(query, from_time)
+    for res in reses:
+        for ts in res.timeSeries:
+            LOG.debug(ts.metadata.attributes)
 
