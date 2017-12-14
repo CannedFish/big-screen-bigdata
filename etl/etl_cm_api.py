@@ -304,6 +304,7 @@ def get_vir_resource_status():
 
     return result
 
+# NOTE: For test, now is 30 day long
 one_day_seconds = 60*60*24*30
 def get_user_statistics():
     result = []
@@ -314,5 +315,15 @@ def get_user_statistics():
     reses = api.query_timeseries(query, from_time)
     for res in reses:
         for ts in res.timeSeries:
-            LOG.debug(ts.metadata.attributes)
+            data = ts.metadata.attributes
+            result.append({
+                'job_id': data['entityName'],
+                'user': data['user'],
+                'vcore_seconds': data['allocated_vcore_seconds'],
+                'memory_uesd': data['mb_millis'] if data['state'] == 'SUCCEEDED' else 0,
+                'during_time': float(data['application_duration'])/1000.0,
+                'status': data['state']
+            })
+
+    return result
 
