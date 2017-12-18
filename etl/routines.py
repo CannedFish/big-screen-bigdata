@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import etl_cm_api as api
+import db
+
 import abc
 from threading import Thread, Condition
 import time
@@ -52,16 +55,16 @@ class MyThread(Thread):
         self._cond.release()
         LOG.info("%s-%d resumed" % (self.name, self.threadID))
 
-class Routine(Object):
+class Routine(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def run(self):
         """What about this routing to do"""
 
-class RoutinePool(MyThread):
+class RoutineQueue(MyThread):
     def __init__(self, delay):
-        super(RoutinePool, self).__init__('RoutinePool', delay)
+        super(RoutineQueue, self).__init__('RoutineQueue', delay)
         self._routines = []
         self._delay = delay
 
@@ -76,10 +79,146 @@ class RoutinePool(MyThread):
     def add(self, routine):
         if not isinstance(routine, Routine):
             raise TypeError('Must be an instance of Routine or its subclass')
+        if routine in self._routines:
+            LOG.warning('%s has been added.' % type(routine).__name__)
+            return
         self._routines.append(routine)
+        LOG.info("%s has been added." % type(routine).__name__)
 
     def remove(self, routine):
         if not isinstance(routine, Routine):
             raise TypeError('Must be an instance of Routine or its subclass')
+        if routine not in self._routines:
+            LOG.warning('%s has not been added.' % type(routine).__name__)
+            return
         self._routines.remove(routine)
+        LOG.info("%s has been removed." % type(routine).__name__)
+
+class Singleton(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class AbsSingleton(abc.ABCMeta, Singleton):
+    pass
+
+class HostStatusRoutine(Routine):
+    __metaclass__ = AbsSingleton
+
+    def run(self):
+        val = map(lambda x: [x['timestamp'], x['host_running'], x['host_down']], \
+                api.get_host_status())
+        return db.insertRows('phy_health', {\
+            'columns': ['timestamp', 'host_running', 'host_down'],\
+            'values': val\
+        })
+
+class ClusterResourceRoutine(Routine):
+    __metaclass__ = AbsSingleton
+
+    def run(self):
+        val = map(lambda x: [x['timestamp'], x['cluster'], x['nodes'], x['cores'], \
+                x['memory'], x['disk']], api.get_cluster_resource())
+        return db.insertRows('cluster_resource', {\
+            'columns': ['timestamp', 'cluster', 'nodes', 'cores', 'memory', 'disk'],\
+            'values': val\
+        })
+
+class ClusterResourceUsageRoutine(Routine):
+    __metaclass__ = AbsSingleton
+
+    def run(self):
+        val = map(lambda x: [x['timestamp'], x['cluster'], x['cpu_percent'], \
+                x['mem_used'], x['disk_used'], x['disk_input'], x['disk_output'], \
+                x['net_input'], x['net_output'], x['health']], \
+                api.get_cluster_resource_usage())
+        return db.insertRows('cluster_status', {\
+                'columns': ['timestamp', 'cluster', 'cpu_percent', 'mem_used', \
+                    'disk_used', 'disk_input', 'disk_output', 'net_input', \
+                    'net_output', 'health'],
+                'values': val
+        })
+
+class ServiceStatusRoutine(Routine):
+    __metaclass__ = AbsSingleton
+
+    def run(self):
+        ret = api.get_service_status()
+        val = []
+        for _ in ret.itervalues():
+            val.extend([[x['timestamp'], x['service_name'], x['cluster'], x['health']] \
+                    for x in _])
+            
+        return db.insertRows('service_status', {\
+            'columns': ['timestamp', 'service_name', 'cluster', 'health'],\
+            'values': val\
+        })
+
+class DataCollectroVolumeRoutine(Routine):
+    __metaclass__ = AbsSingleton
+
+    def run(self):
+        val = [[x['timestamp'], x['volume']] for x in api.get_data_collector_volume()]
+        return db.insertRows('data_collector_volume', {\
+            'columns': ['timestamp', 'volume'],\
+            'values': val\
+        })
+
+class MsgQueueVolumeRoutine(Routine):
+    __metaclass__ = AbsSingleton
+
+    def run(self):
+        val = [[x['timestamp'], x['volume_in'], x['volume_out']] \
+                for x in api.get_msg_queue_volume()]
+        return db.insertRows('msg_queue_volume', {\
+            'columns': ['timestamp', 'volume_in', 'volume_out'],\
+            'values': val\
+        })
+
+class DataStatisticsRoutine(Routine):
+    __metaclass__ = AbsSingleton
+
+    def run(self):
+        val = [[x['timestamp'], x['records']] for x in api.get_data_statistics()]
+        return db.insertRows('data_statistics', {\
+            'columns': ['timestamp', 'records'],\
+            'values': val
+        })
+
+class VirResourceRoutine(Routine):
+    __metaclass__ = AbsSingleton
+
+    def run(self):
+        val = [[x['timestamp'], x['vcores'], x['vmems'], x['hdfs_capacity']] \
+                for x in api.get_vir_resource()]
+        return db.insertRows('vir_resource', {\
+            'columns': ['timestamp', 'vcores', 'vmems', 'hdfs_capacity'],\
+            'values': val\
+        })
+
+class VirResourceStatusRoutine(Routine):
+    __metaclass__ = AbsSingleton
+
+    def run(self):
+        val = [[x['timestamp'], x['vcores_used'], x['vmems_used'], x['hdfs_used']] \
+                for x in api.get_vir_resource_status()]
+        return db.insertRows('vir_res_status', {\
+            'columns': ['timestamp', 'vcores_used', 'vmems_used', 'hdfs_used'],\
+            'values': val\
+        })
+
+class UserStatisticsRoutine(Routine):
+    __metaclass__ = AbsSingleton
+
+    def run(self):
+        val = [[x['timestamp'], x['job_id'], x['user'], x['vcore_seconds'], \
+                x['memory_used'], x['during_time'], x['status']] \
+                for x in api.get_user_statistics()]
+        return db.insertRows('user_statistics', {\
+            'columns': ['timestamp', 'job_id', 'user', 'vcore_seconds', \
+                        'memory_used', 'during_time', 'status'],
+            'values': val
+        })
 

@@ -83,6 +83,7 @@ def get_cluster_resource():
         for core in res.timeSeries[0:data_size]:
             cluster = __cluster_belongs(core.metadata.entityName)
             result[cluster]['nodes'] += 1
+            result[cluster]['timestamp'] = time.mktime(core.data[0].timestamp.timetuple())
             result[cluster]['cores'] += core.data[0].value
 
         for mem in res.timeSeries[data_size:data_size*2]:
@@ -124,6 +125,8 @@ def get_cluster_resource_usage():
             cluster = __cluster_belongs(cpu.metadata.entityName)
             for data, _ in zip(cpu.data, range(len(cpu.data))):
                 result[cluster][_]['timestamp'] = data.timestamp
+                # TODO: get from host status
+                result[cluster][_]['health'] = 0
                 result[cluster][_]['cpu_percent'].append(data.value)
 
         for mem in res.timeSeries[data_size:]:
@@ -317,6 +320,7 @@ def get_user_statistics():
         for ts in res.timeSeries:
             data = ts.metadata.attributes
             result.append({
+                'timestamp': time.mktime(ts.data[0].timestamp.timetuple()),
                 'job_id': data['entityName'],
                 'user': data['user'],
                 'vcore_seconds': data['allocated_vcore_seconds'],
