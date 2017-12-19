@@ -10,6 +10,6 @@ cm_api/cm_api.egg-info/*
 
 build/*
 dist/*
-etl.egg-info/*
+big_screen_bigdata.egg-info/*
 
 .venv/*

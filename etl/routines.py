@@ -104,12 +104,14 @@ class Singleton(type):
 class AbsSingleton(abc.ABCMeta, Singleton):
     pass
 
+# TODO: add HEADER!!!
 class HostStatusRoutine(Routine):
     __metaclass__ = AbsSingleton
 
     def run(self):
         val = map(lambda x: [x['timestamp'], x['host_running'], x['host_down']], \
                 api.get_host_status())
+        LOG.debug(val)
         return db.insertRows('phy_health', {\
             'columns': ['timestamp', 'host_running', 'host_down'],\
             'values': val\
@@ -121,6 +123,7 @@ class ClusterResourceRoutine(Routine):
     def run(self):
         val = map(lambda x: [x['timestamp'], x['cluster'], x['nodes'], x['cores'], \
                 x['memory'], x['disk']], api.get_cluster_resource())
+        LOG.debug(val)
         return db.insertRows('cluster_resource', {\
             'columns': ['timestamp', 'cluster', 'nodes', 'cores', 'memory', 'disk'],\
             'values': val\
@@ -134,6 +137,7 @@ class ClusterResourceUsageRoutine(Routine):
                 x['mem_used'], x['disk_used'], x['disk_input'], x['disk_output'], \
                 x['net_input'], x['net_output'], x['health']], \
                 api.get_cluster_resource_usage())
+        LOG.debug(val)
         return db.insertRows('cluster_status', {\
                 'columns': ['timestamp', 'cluster', 'cpu_percent', 'mem_used', \
                     'disk_used', 'disk_input', 'disk_output', 'net_input', \
@@ -150,6 +154,7 @@ class ServiceStatusRoutine(Routine):
         for _ in ret.itervalues():
             val.extend([[x['timestamp'], x['service_name'], x['cluster'], x['health']] \
                     for x in _])
+        LOG.debug(val)
             
         return db.insertRows('service_status', {\
             'columns': ['timestamp', 'service_name', 'cluster', 'health'],\
@@ -161,6 +166,7 @@ class DataCollectroVolumeRoutine(Routine):
 
     def run(self):
         val = [[x['timestamp'], x['volume']] for x in api.get_data_collector_volume()]
+        LOG.debug(val)
         return db.insertRows('data_collector_volume', {\
             'columns': ['timestamp', 'volume'],\
             'values': val\
@@ -172,6 +178,7 @@ class MsgQueueVolumeRoutine(Routine):
     def run(self):
         val = [[x['timestamp'], x['volume_in'], x['volume_out']] \
                 for x in api.get_msg_queue_volume()]
+        LOG.debug(val)
         return db.insertRows('msg_queue_volume', {\
             'columns': ['timestamp', 'volume_in', 'volume_out'],\
             'values': val\
@@ -182,6 +189,7 @@ class DataStatisticsRoutine(Routine):
 
     def run(self):
         val = [[x['timestamp'], x['records']] for x in api.get_data_statistics()]
+        LOG.debug(val)
         return db.insertRows('data_statistics', {\
             'columns': ['timestamp', 'records'],\
             'values': val
@@ -193,6 +201,7 @@ class VirResourceRoutine(Routine):
     def run(self):
         val = [[x['timestamp'], x['vcores'], x['vmems'], x['hdfs_capacity']] \
                 for x in api.get_vir_resource()]
+        LOG.debug(val)
         return db.insertRows('vir_resource', {\
             'columns': ['timestamp', 'vcores', 'vmems', 'hdfs_capacity'],\
             'values': val\
@@ -204,6 +213,7 @@ class VirResourceStatusRoutine(Routine):
     def run(self):
         val = [[x['timestamp'], x['vcores_used'], x['vmems_used'], x['hdfs_used']] \
                 for x in api.get_vir_resource_status()]
+        LOG.debug(val)
         return db.insertRows('vir_res_status', {\
             'columns': ['timestamp', 'vcores_used', 'vmems_used', 'hdfs_used'],\
             'values': val\
@@ -216,6 +226,7 @@ class UserStatisticsRoutine(Routine):
         val = [[x['timestamp'], x['job_id'], x['user'], x['vcore_seconds'], \
                 x['memory_used'], x['during_time'], x['status']] \
                 for x in api.get_user_statistics()]
+        LOG.debug(val)
         return db.insertRows('user_statistics', {\
             'columns': ['timestamp', 'job_id', 'user', 'vcore_seconds', \
                         'memory_used', 'during_time', 'status'],

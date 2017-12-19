@@ -54,7 +54,6 @@ def get_host_status():
                 else:
                     result[_]['host_down'] += 1
 
-    LOG.debug(result)
     return [{ \
         'timestamp': time.mktime(r['timestamp'].timetuple()),\
         'host_running': r['host_running'],\
@@ -94,7 +93,6 @@ def get_cluster_resource():
             cluster = __cluster_belongs(disk.metadata.entityName)
             result[cluster]['disk'] += disk.data[0].value
 
-    LOG.debug(result)
     return result
 
 
@@ -173,7 +171,6 @@ def get_cluster_resource_usage():
             for data, _ in zip(net_out.data, range(len(net_out.data))):
                 result[cluster][_]['net_output'].append(data.value)
 
-    LOG.debug(result)
     return [[\
         {
             'timestamp': time.mktime(metric['timestamp'].timetuple()),\

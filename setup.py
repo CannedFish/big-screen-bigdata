@@ -9,9 +9,9 @@ import sys
 def main():
     HERE = os.path.abspath(os.path.dirname(__file__))
 
-    setup = os.path.join(HERE, "cm_api", "setup.py")
-    fobj = open(setup)
-    imp.load_module("__setup2__", fobj, setup, imp.get_suffixes()[3])
+    setup_cm_api = os.path.join(HERE, "cm_api", "setup.py")
+    fobj = open(setup_cm_api)
+    imp.load_module("__setup2__", fobj, setup_cm_api, imp.get_suffixes()[3])
     
     sys.path.insert(0, os.path.join(HERE, 'etl'))
 
