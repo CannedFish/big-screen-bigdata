@@ -181,7 +181,8 @@ def get_cluster_resource_usage():
             'disk_input': sum(metric['disk_input'])/len(metric['disk_input']),\
             'disk_output': sum(metric['disk_output'])/len(metric['disk_output']),\
             'net_input': sum(metric['net_input'])/len(metric['net_input']),\
-            'net_output': sum(metric['net_output'])/len(metric['net_output'])\
+            'net_output': sum(metric['net_output'])/len(metric['net_output']),\
+            'health': metric['health']\
         } for metric in c\
     ] for c in result]
 
@@ -321,7 +322,7 @@ def get_user_statistics():
                 'job_id': data['entityName'],
                 'user': data['user'],
                 'vcore_seconds': data['allocated_vcore_seconds'],
-                'memory_uesd': data['mb_millis'] if data['state'] == 'SUCCEEDED' else 0,
+                'memory_used': data['mb_millis'] if data['state'] == 'SUCCEEDED' else 0,
                 'during_time': float(data['application_duration'])/1000.0,
                 'status': data['state']
             })

@@ -71,7 +71,10 @@ class RoutineQueue(MyThread):
     def work(self):
         for routine in self._routines:
             try:
-                routine.run()
+                ret = routine.run()
+                LOG.debug('%s runs %s: %s' % (type(routine).__name__, \
+                        'OK' if ret['success'] else 'Failed', \
+                        ret['data']))
             except Exception, e:
                 LOG.error(e)
         time.sleep(self._delay)
@@ -104,7 +107,6 @@ class Singleton(type):
 class AbsSingleton(abc.ABCMeta, Singleton):
     pass
 
-# TODO: add HEADER!!!
 class HostStatusRoutine(Routine):
     __metaclass__ = AbsSingleton
 
@@ -133,10 +135,12 @@ class ClusterResourceUsageRoutine(Routine):
     __metaclass__ = AbsSingleton
 
     def run(self):
-        val = map(lambda x: [x['timestamp'], x['cluster'], x['cpu_percent'], \
+        ret = api.get_cluster_resource_usage()
+        val = []
+        for _ in ret:
+            val.extend([[x['timestamp'], x['cluster'], x['cpu_percent'], \
                 x['mem_used'], x['disk_used'], x['disk_input'], x['disk_output'], \
-                x['net_input'], x['net_output'], x['health']], \
-                api.get_cluster_resource_usage())
+                x['net_input'], x['net_output'], x['health']] for x in _])
         LOG.debug(val)
         return db.insertRows('cluster_status', {\
                 'columns': ['timestamp', 'cluster', 'cpu_percent', 'mem_used', \
