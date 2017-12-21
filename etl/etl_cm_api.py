@@ -298,8 +298,8 @@ def get_vir_resource_status():
         for c, m, h in zip(vcore.data, vmem.data, hdfs.data):
             result.append({
                 'timestamp': time.mktime(c.timestamp.timetuple()),
-                'vcores_used': c.value,
-                'vmems_used': m.value,
+                'vcore_used': c.value,
+                'vmem_used': m.value,
                 'hdfs_used': h.value,
             })
 

@@ -1,0 +1,12 @@
+[Unit]
+Description=BigData platform data ETL for big screen.
+After=syslog.target
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/bin/python /usr/local/bin/bg_bigdata_etl
+
+[Install]
+WantedBy=multi-user.target
+

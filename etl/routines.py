@@ -215,11 +215,11 @@ class VirResourceStatusRoutine(Routine):
     __metaclass__ = AbsSingleton
 
     def run(self):
-        val = [[x['timestamp'], x['vcores_used'], x['vmems_used'], x['hdfs_used']] \
+        val = [[x['timestamp'], x['vcore_used'], x['vmem_used'], x['hdfs_used']] \
                 for x in api.get_vir_resource_status()]
         LOG.debug(val)
         return db.insertRows('vir_res_status', {\
-            'columns': ['timestamp', 'vcores_used', 'vmems_used', 'hdfs_used'],\
+            'columns': ['timestamp', 'vcore_used', 'vmem_used', 'hdfs_used'],\
             'values': val\
         })
 

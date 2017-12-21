@@ -22,5 +22,19 @@ LOG = logging.getLogger(__name__)
 
 # LOG.debug(ClusterResourceRoutine().run())
 
-LOG.debug(ClusterResourceUsageRoutine().run())
+# LOG.debug(ClusterResourceUsageRoutine().run())
+
+# LOG.debug(ServiceStatusRoutine().run())
+
+# LOG.debug(DataCollectroVolumeRoutine().run())
+
+# LOG.debug(MsgQueueVolumeRoutine().run())
+
+# LOG.debug(DataStatisticsRoutine().run())
+
+# LOG.debug(VirResourceRoutine().run())
+
+# LOG.debug(VirResourceStatusRoutine().run())
+
+LOG.debug(UserStatisticsRoutine().run())
 
