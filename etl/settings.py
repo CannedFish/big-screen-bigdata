@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from os import path
+import re
+
 # Log
 log_file_path = '/var/log/big_screen_bigdata.log'
 
@@ -27,10 +30,10 @@ if path.exists(conf_file_path):
             if not re.match('\s*#', line) \
                     and not re.match('\s+', line):
                 l = re.split('=', line)
-        # NOTE: handle special keys
-        key = l[0].strip()
-        if key == 'db_server_port':
-            conf[key] = int(l[1].strip())
-        else:
-            conf[key] = l[1].strip()
+                # NOTE: handle special keys
+                key = l[0].strip()
+                if key == 'db_server_port':
+                    conf[key] = int(l[1].strip())
+                else:
+                    conf[key] = l[1].strip()
 

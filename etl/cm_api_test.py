@@ -20,7 +20,7 @@ LOG = logging.getLogger(__name__)
 
 # LOG.debug(etl_cm_api.get_host_status())
 
-# etl_cm_api.get_cluster_resource()
+LOG.debug(etl_cm_api.get_cluster_resource())
 
 # LOG.debug(etl_cm_api.get_cluster_resource_usage())
 
@@ -36,5 +36,5 @@ LOG = logging.getLogger(__name__)
 
 # LOG.debug(json.dumps(etl_cm_api.get_vir_resource_status()))
 
-LOG.debug(json.dumps(etl_cm_api.get_user_statistics()))
+# LOG.debug(json.dumps(etl_cm_api.get_user_statistics()))
 
