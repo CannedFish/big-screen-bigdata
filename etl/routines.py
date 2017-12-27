@@ -169,6 +169,7 @@ class DataCollectroVolumeRoutine(Routine):
     __metaclass__ = AbsSingleton
 
     def run(self):
+        # TODO: wrong interval
         val = [[x['timestamp'], x['volume']] for x in api.get_data_collector_volume()]
         LOG.debug(val)
         return db.insertRows('data_collector_volume', {\
@@ -180,6 +181,7 @@ class MsgQueueVolumeRoutine(Routine):
     __metaclass__ = AbsSingleton
 
     def run(self):
+        # TODO: wrong interval
         val = [[x['timestamp'], x['volume_in'], x['volume_out']] \
                 for x in api.get_msg_queue_volume()]
         LOG.debug(val)
@@ -192,6 +194,7 @@ class DataStatisticsRoutine(Routine):
     __metaclass__ = AbsSingleton
 
     def run(self):
+        # TODO: wrong interval
         val = [[x['timestamp'], x['records']] for x in api.get_data_statistics()]
         LOG.debug(val)
         return db.insertRows('data_statistics', {\
