@@ -36,7 +36,7 @@ api = ApiResource(cm_host_name
 def get_host_status():
     # NOTE: call every 5 minuts
     LOG.debug('get_host_status called')
-    query = 'select health_good_rate where hostname rlike "bigdata-[0-9]+" and category=HOST'
+    query = 'select health_good_rate where hostname rlike "bigdata-[0-9]+" and category=HOST and clusterDisplayName="Cluster_Common"'
     LOG.debug('query: %s' % query)
 
     result = [{
@@ -62,7 +62,7 @@ def get_host_status():
 
 def get_cluster_resource():
     LOG.debug('get_cluster_resource called')
-    query = 'SELECT cores, physical_memory_total, total_capacity_across_directories WHERE hostname rlike "bigdata-[0-9]+" AND category=HOST'
+    query = 'SELECT cores, physical_memory_total, total_capacity_across_directories WHERE hostname rlike "bigdata-[0-9]+" AND category=HOST and clusterDisplayName="Cluster_Common"'
     LOG.debug('query: %s' % query)
 
     result = [{
@@ -113,7 +113,7 @@ def get_cluster_resource_usage():
     } for __ in range(5)] for _ in range(3)]
 
     # CPU, memory
-    query = 'SELECT cpu_percent, physical_memory_used WHERE hostname RLIKE "bigdata-[0-9]+" AND category=HOST'
+    query = 'SELECT cpu_percent, physical_memory_used WHERE hostname RLIKE "bigdata-[0-9]+" AND category=HOST and clusterDisplayName="Cluster_Common"'
     LOG.debug('query: %s' % query)
     reses = api.query_timeseries(query)
     for res in reses:
@@ -133,7 +133,7 @@ def get_cluster_resource_usage():
                 result[cluster][_]['mem_used'] += data.value
 
     # Disk, Disk IO
-    query = 'SELECT total_capacity_used_across_directories, total_write_bytes_rate_across_disks, total_read_bytes_rate_across_disks WHERE hostname RLIKE "bigdata-[0-9]+" AND category=HOST'
+    query = 'SELECT total_capacity_used_across_directories, total_write_bytes_rate_across_disks, total_read_bytes_rate_across_disks WHERE hostname RLIKE "bigdata-[0-9]+" AND category=HOST and clusterDisplayName="Cluster_Common"'
     LOG.debug('query: %s' % query)
     reses = api.query_timeseries(query)
     for res in reses:
@@ -155,7 +155,7 @@ def get_cluster_resource_usage():
                 result[cluster][_]['disk_output'].append(data.value)
 
     # Net IO
-    query = 'SELECT total_bytes_receive_rate_across_network_interfaces, total_bytes_transmit_rate_across_network_interfaces WHERE hostname RLIKE "bigdata-[0-9]+" AND category=HOST'
+    query = 'SELECT total_bytes_receive_rate_across_network_interfaces, total_bytes_transmit_rate_across_network_interfaces WHERE hostname RLIKE "bigdata-[0-9]+" AND category=HOST and clusterDisplayName="Cluster_Common"'
     LOG.debug('query: %s' % query)
     reses = api.query_timeseries(query)
     for res in reses:
@@ -203,7 +203,7 @@ def __service_cluster_belongs(serv_name):
 def get_service_status():
     result = {}
 
-    query = 'SELECT health_good_rate WHERE category=SERVICE'
+    query = 'SELECT health_good_rate WHERE category=SERVICE and clusterDisplayName="Cluster_Common"'
     LOG.debug('query: %s' % query)
     reses = api.query_timeseries(query)
     for res in reses:
@@ -226,7 +226,7 @@ def get_service_status():
 def get_data_collector_volume():
     result = []
 
-    query = 'SELECT event_received_rate_across_flume_sources WHERE category=CLUSTER'
+    query = 'SELECT event_received_rate_across_flume_sources WHERE category=CLUSTER and clusterDisplayName="Cluster_Common"'
     LOG.debug('query: %s' % query)
     reses = api.query_timeseries(query)
     for res in reses:
@@ -242,7 +242,7 @@ def get_data_collector_volume():
 def get_msg_queue_volume():
     result = []
 
-    query = 'SELECT kafka_bytes_received_rate_across_kafka_brokers, kafka_bytes_fetched_rate_across_kafka_brokers WHERE category=CLUSTER'
+    query = 'SELECT kafka_bytes_received_rate_across_kafka_brokers, kafka_bytes_fetched_rate_across_kafka_brokers WHERE category=CLUSTER and clusterDisplayName="Cluster_Common"'
     LOG.debug('query: %s' % query)
     reses = api.query_timeseries(query)
     for res in reses:
@@ -268,31 +268,11 @@ def get_data_statistics():
 def get_vir_resource():
     result = []
 
-    query = 'SELECT available_vcores_across_yarn_pools, available_memory_mb_across_yarn_pools, dfs_capacity_across_hdfss WHERE category=CLUSTER'
+    query = 'SELECT available_vcores_across_yarn_pools, available_memory_mb_across_yarn_pools*1048576, dfs_capacity_across_hdfss WHERE category=CLUSTER and clusterDisplayName="Cluster_Common"'
     LOG.debug('query: %s' % query)
-    # TODO: Error when exists more than one cluster
+    # NOTE: Error when exists more than one cluster
     # Data format(e.g. 2 clusters):
     # [vcore_of_c1, vcore_of_c2, vmem_of_c1, vmem_of_c2, hdfs_of_c1, hdfs_of_c2]
-    reses = api.query_timeseries(query)
-    for res in reses:
-        vcore = res.timeSeries[0]
-        vmem = res.timeSeries[1] # NOTE: The unit is MB, not bytes
-        hdfs = res.timeSeries[2]
-        for c, m, h in zip(vcore.data, vmem.data, hdfs.data):
-            result.append({
-                'timestamp': time.mktime(c.timestamp.timetuple()),
-                'vcores': c.value,
-                'vmems': m.value,
-                'hdfs_capacity': h.value,
-            })
-
-    return result
-
-def get_vir_resource_status():
-    result = []
-
-    query = 'SELECT allocated_vcores_across_yarn_pools, allocated_memory_mb_across_yarn_pools, dfs_capacity_used_across_hdfss WHERE category=CLUSTER'
-    LOG.debug('query: %s' % query)
     reses = api.query_timeseries(query)
     for res in reses:
         vcore = res.timeSeries[0]
@@ -301,9 +281,59 @@ def get_vir_resource_status():
         for c, m, h in zip(vcore.data, vmem.data, hdfs.data):
             result.append({
                 'timestamp': time.mktime(c.timestamp.timetuple()),
-                'vcore_used': c.value,
-                'vmem_used': m.value,
-                'hdfs_used': h.value,
+                'vcores': c.value,
+                'vmems': m.value,
+                'hdfs_capacity': h.value,
+            })
+        # span = len(res.timeSeries) / 3
+        # agg = [[{'t': s[0].data[idx].timestamp, \
+                # 'v': reduce(lambda x,y: x+y, \
+                # map(lambda x: x.data[idx].value, s))} \
+                # for idx in range(len(s[0].data))] \
+                # for s in [res.timeSeries[0:span], \
+                # res.timeSeries[span:span*2], \
+                # res.timeSeries[span*2:]]]
+        # for c, m, h in zip(agg[0], agg[1], agg[2]):
+            # result.append({
+                # 'timestamp': time.mktime(c['t'].timetuple()),
+                # 'vcores': c['v'],
+                # 'vmems': m['v']*1048576, # Trans MB to Bytes
+                # 'hdfs_capacity': h['v'],
+            # })
+
+    return result
+
+def get_vir_resource_status():
+    result = []
+
+    query = 'SELECT allocated_vcores_across_yarn_pools, allocated_memory_mb_across_yarn_pools*1048576, dfs_capacity_used_across_hdfss WHERE category=CLUSTER and clusterDisplayName="Cluster_Common"'
+    LOG.debug('query: %s' % query)
+    reses = api.query_timeseries(query)
+    for res in reses:
+        # vcore = res.timeSeries[0]
+        # vmem = res.timeSeries[1]
+        # hdfs = res.timeSeries[2]
+        # for c, m, h in zip(vcore.data, vmem.data, hdfs.data):
+            # result.append({
+                # 'timestamp': time.mktime(c.timestamp.timetuple()),
+                # 'vcore_used': c.value,
+                # 'vmem_used': m.value,
+                # 'hdfs_used': h.value,
+            # })
+        span = len(res.timeSeries) / 3
+        agg = [[{'t': s[0].data[idx].timestamp, \
+                'v': reduce(lambda x,y: x+y, \
+                map(lambda x: x.data[idx].value, s))} \
+                for idx in range(len(s[0].data))] \
+                for s in [res.timeSeries[0:span], \
+                res.timeSeries[span:span*2], \
+                res.timeSeries[span*2:]]]
+        for c, m, h in zip(agg[0], agg[1], agg[2]):
+            result.append({
+                'timestamp': time.mktime(c['t'].timetuple()),
+                'vcores': c['v'],
+                'vmems': m['v']*1048576, # Trans MB to Bytes
+                'hdfs_capacity': h['v'],
             })
 
     return result
@@ -313,7 +343,7 @@ one_day_seconds = 60*60*24*30
 def get_user_statistics():
     result = []
 
-    query = 'SELECT allocated_vcore_seconds FROM YARN_APPLICATIONS'
+    query = 'SELECT allocated_vcore_seconds FROM YARN_APPLICATIONS and clusterDisplayName="Cluster_Common"'
     LOG.debug('query: %s' % query)
     from_time = datetime.fromtimestamp(time.time()-one_day_seconds)
     reses = api.query_timeseries(query, from_time)
