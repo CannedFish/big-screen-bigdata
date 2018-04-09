@@ -270,10 +270,13 @@ def get_vir_resource():
 
     query = 'SELECT available_vcores_across_yarn_pools, available_memory_mb_across_yarn_pools, dfs_capacity_across_hdfss WHERE category=CLUSTER'
     LOG.debug('query: %s' % query)
+    # TODO: Error when exists more than one cluster
+    # Data format(e.g. 2 clusters):
+    # [vcore_of_c1, vcore_of_c2, vmem_of_c1, vmem_of_c2, hdfs_of_c1, hdfs_of_c2]
     reses = api.query_timeseries(query)
     for res in reses:
         vcore = res.timeSeries[0]
-        vmem = res.timeSeries[1]
+        vmem = res.timeSeries[1] # NOTE: The unit is MB, not bytes
         hdfs = res.timeSeries[2]
         for c, m, h in zip(vcore.data, vmem.data, hdfs.data):
             result.append({
