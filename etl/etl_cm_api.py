@@ -265,6 +265,7 @@ def get_data_statistics():
             'records': random.randint(0, 1000000)\
     } for _ in range(5)]
 
+mb_to_b = 1024 ** 2
 def get_vir_resource():
     result = []
 
@@ -282,7 +283,7 @@ def get_vir_resource():
             result.append({
                 'timestamp': time.mktime(c.timestamp.timetuple()),
                 'vcores': c.value,
-                'vmems': m.value,
+                'vmems': m.value*mb_to_b,
                 'hdfs_capacity': h.value,
             })
         # span = len(res.timeSeries) / 3
@@ -310,31 +311,31 @@ def get_vir_resource_status():
     LOG.debug('query: %s' % query)
     reses = api.query_timeseries(query)
     for res in reses:
-        # vcore = res.timeSeries[0]
-        # vmem = res.timeSeries[1]
-        # hdfs = res.timeSeries[2]
-        # for c, m, h in zip(vcore.data, vmem.data, hdfs.data):
-            # result.append({
-                # 'timestamp': time.mktime(c.timestamp.timetuple()),
-                # 'vcore_used': c.value,
-                # 'vmem_used': m.value,
-                # 'hdfs_used': h.value,
-            # })
-        span = len(res.timeSeries) / 3
-        agg = [[{'t': s[0].data[idx].timestamp, \
-                'v': reduce(lambda x,y: x+y, \
-                map(lambda x: x.data[idx].value, s))} \
-                for idx in range(len(s[0].data))] \
-                for s in [res.timeSeries[0:span], \
-                res.timeSeries[span:span*2], \
-                res.timeSeries[span*2:]]]
-        for c, m, h in zip(agg[0], agg[1], agg[2]):
+        vcore = res.timeSeries[0]
+        vmem = res.timeSeries[1]
+        hdfs = res.timeSeries[2]
+        for c, m, h in zip(vcore.data, vmem.data, hdfs.data):
             result.append({
-                'timestamp': time.mktime(c['t'].timetuple()),
-                'vcores': c['v'],
-                'vmems': m['v']*1048576, # Trans MB to Bytes
-                'hdfs_capacity': h['v'],
+                'timestamp': time.mktime(c.timestamp.timetuple()),
+                'vcore_used': c.value,
+                'vmem_used': m.value*mb_to_b,
+                'hdfs_used': h.value,
             })
+        # span = len(res.timeSeries) / 3
+        # agg = [[{'t': s[0].data[idx].timestamp, \
+                # 'v': reduce(lambda x,y: x+y, \
+                # map(lambda x: x.data[idx].value, s))} \
+                # for idx in range(len(s[0].data))] \
+                # for s in [res.timeSeries[0:span], \
+                # res.timeSeries[span:span*2], \
+                # res.timeSeries[span*2:]]]
+        # for c, m, h in zip(agg[0], agg[1], agg[2]):
+            # result.append({
+                # 'timestamp': time.mktime(c['t'].timetuple()),
+                # 'vcores': c['v'],
+                # 'vmems': m['v']*mb_to_b, # Trans MB to Bytes
+                # 'hdfs_capacity': h['v'],
+            # })
 
     return result
 
