@@ -17,7 +17,7 @@ def main():
 
     setup_args = dict(
         name="big_screen_bigdata",
-        version="0.5.0",
+        version="0.5.1",
         description="ETL for preparing bigdata statistic for big screen",
         author="CannedFish Liang",
         author_email="lianggy0719@126.com",
